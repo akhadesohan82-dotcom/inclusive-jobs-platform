@@ -16,22 +16,131 @@ import {
   DollarSign,
   CheckCircle2,
   Sparkles,
-  Send
+  Send,
+  Bookmark,
+  FileText,
+  BookOpen,
+  ExternalLink,
+  Sun,
+  Moon,
+  Eye,
+  Bell,
+  LayoutDashboard,
+  Users,
+  History,
+  Info
 } from 'lucide-react';
 import { cn } from './lib/utils';
-import { Job, UserProfile, DisabilityType, AccommodationType, Message } from './types';
-import { MOCK_JOBS } from './constants';
+import { Job, UserProfile, DisabilityType, AccommodationType, Message, Application, Resource } from './types';
+import { MOCK_JOBS, MOCK_RESOURCES } from './constants';
 import { getJobRecommendations } from './services/geminiService';
+import packageJson from '../package.json';
+
+const APP_VERSION = packageJson.version;
+
+const VERSION_HISTORY = [
+  { version: '1.7.0', date: '2026-03-05', changes: ['AI Resume Optimizer', 'Real-time Chat (WebSockets)', 'Enhanced Backend API', 'Live Messaging System'] },
+  { version: '1.6.0', date: '2026-03-05', changes: ['Accessibility Audit Tool', 'Employer Compliance Reports', 'Improved UI Performance', 'Bug Fixes'] },
+  { version: '1.5.0', date: '2026-03-05', changes: ['Full-stack Backend Integration', 'Express Server Setup', 'Dynamic API Data Fetching', 'Improved Loading States'] },
+  { version: '1.4.0', date: '2026-03-05', changes: ['Enhanced Employer Dashboard', 'Applicant Match Scoring', 'Hiring Insights & Analytics', 'Job Post Management'] },
+  { version: '1.3.0', date: '2026-03-05', changes: ['Multi-Theme Support', 'Dark Mode Implementation', 'High Contrast Accessibility Mode', 'Theme Switcher Component'] },
+  { version: '1.2.0', date: '2026-03-05', changes: ['Added Version History', 'Implemented Job Alerts', 'Interactive Version Tag', 'UI Refinements'] },
+  { version: '1.1.0', date: '2026-03-04', changes: ['Added Job Application Tracking', 'Implemented Saved Jobs', 'Launched Resource Center', 'Enhanced Profile Dashboard'] },
+  { version: '1.0.0', date: '2026-03-01', changes: ['Initial Launch', 'Smart Job Matching', 'Inclusive Profile Creation', 'Accessibility-First Design'] },
+];
+
+type Theme = 'light' | 'dark' | 'high-contrast';
 
 // --- Components ---
 
-const Navbar = ({ user }: { user: UserProfile | null }) => {
+const VersionModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="bg-card-bg w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-border-subtle"
+          >
+            <div className="p-6 border-b border-border-subtle flex justify-between items-center bg-[#F5F5F0] dark:bg-[#333]">
+              <div className="flex items-center gap-3">
+                <History className="text-[#5A5A40]" size={24} />
+                <h2 className="text-2xl">Version History</h2>
+              </div>
+              <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 max-h-[60vh] overflow-y-auto space-y-8">
+              {VERSION_HISTORY.map((item, idx) => (
+                <div key={item.version} className="relative pl-8 border-l-2 border-border-subtle last:border-l-0">
+                  <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-[#5A5A40] border-4 border-card-bg" />
+                  <div className="mb-1 flex items-center gap-3">
+                    <span className="text-lg font-bold font-mono">v{item.version}</span>
+                    <span className="text-xs text-[#999]">{item.date}</span>
+                    {idx === 0 && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full uppercase">Current</span>}
+                  </div>
+                  <ul className="space-y-1">
+                    {item.changes.map(change => (
+                      <li key={change} className="text-sm text-[#666] flex items-start gap-2">
+                        <span className="mt-1.5 w-1 h-1 rounded-full bg-[#5A5A40] shrink-0" />
+                        {change}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <div className="p-6 bg-[#FDFCFB] dark:bg-[#222] border-t border-border-subtle text-center">
+              <p className="text-xs text-[#999]">Inclusive Jobs is continuously evolving to better serve our community.</p>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const ThemeSwitcher = ({ theme, setTheme }: { theme: Theme, setTheme: (t: Theme) => void }) => {
+  return (
+    <div className="flex items-center gap-2 bg-[#F5F5F0] dark:bg-[#333] p-1 rounded-full border border-border-subtle">
+      <button 
+        onClick={() => setTheme('light')}
+        className={cn("p-2 rounded-full transition-all", theme === 'light' ? "bg-white text-[#5A5A40] shadow-sm" : "text-[#666]")}
+        aria-label="Light mode"
+      >
+        <Sun size={16} />
+      </button>
+      <button 
+        onClick={() => setTheme('dark')}
+        className={cn("p-2 rounded-full transition-all", theme === 'dark' ? "bg-[#1A1A1A] text-white shadow-sm" : "text-[#666]")}
+        aria-label="Dark mode"
+      >
+        <Moon size={16} />
+      </button>
+      <button 
+        onClick={() => setTheme('high-contrast')}
+        className={cn("p-2 rounded-full transition-all", theme === 'high-contrast' ? "bg-black text-white ring-1 ring-white shadow-sm" : "text-[#666]")}
+        aria-label="High contrast mode"
+      >
+        <Eye size={16} />
+      </button>
+    </div>
+  );
+};
+
+const Navbar = ({ user, theme, setTheme }: { user: UserProfile | null, theme: Theme, setTheme: (t: Theme) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showVersion, setShowVersion] = useState(false);
   const location = useLocation();
 
   const navLinks = [
     { name: 'Find Jobs', path: '/jobs', icon: Briefcase },
-    { name: 'Messages', path: '/messages', icon: MessageSquare },
+    { name: 'Resume AI', path: '/resume-ai', icon: Sparkles },
+    { name: 'Resources', path: '/resources', icon: BookOpen },
+    { name: 'Chat', path: '/chat', icon: MessageSquare },
     { name: 'Profile', path: '/profile', icon: User },
   ];
 
@@ -39,15 +148,27 @@ const Navbar = ({ user }: { user: UserProfile | null }) => {
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-bottom border-[#E5E5E0]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-[#5A5A40] rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-              <Accessibility size={24} />
-            </div>
-            <span className="text-2xl font-serif font-bold text-[#1A1A1A]">Inclusive Jobs</span>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="w-10 h-10 bg-[#5A5A40] rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                <Accessibility size={24} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-serif font-bold text-[#1A1A1A] leading-none">Inclusive Jobs</span>
+                <button 
+                  onClick={() => setShowVersion(true)}
+                  className="text-[10px] font-mono font-bold text-[#5A5A40] mt-1 tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity flex items-center gap-1"
+                >
+                  v{APP_VERSION} <Info size={8} />
+                </button>
+              </div>
+            </Link>
+            <VersionModal isOpen={showVersion} onClose={() => setShowVersion(false)} />
+          </div>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
+            <ThemeSwitcher theme={theme} setTheme={setTheme} />
             {navLinks.map((link) => (
               <Link
                 key={link.path}
@@ -128,15 +249,18 @@ const Navbar = ({ user }: { user: UserProfile | null }) => {
 interface JobCardProps {
   job: Job;
   isRecommended?: boolean;
+  isSaved?: boolean;
+  onSave?: (id: string) => void;
+  onApply?: (job: Job) => void;
   key?: string | number;
 }
 
-const JobCard = ({ job, isRecommended }: JobCardProps) => (
+const JobCard = ({ job, isRecommended, isSaved, onSave, onApply }: JobCardProps) => (
   <motion.div 
     layout
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    className={cn("card relative overflow-hidden", isRecommended && "border-[#5A5A40] ring-1 ring-[#5A5A40]/20")}
+    className={cn("card relative overflow-hidden flex flex-col h-full", isRecommended && "border-[#5A5A40] ring-1 ring-[#5A5A40]/20")}
   >
     {isRecommended && (
       <div className="absolute top-0 right-0 bg-[#5A5A40] text-white px-4 py-1 rounded-bl-2xl text-xs font-medium flex items-center gap-1">
@@ -148,6 +272,15 @@ const JobCard = ({ job, isRecommended }: JobCardProps) => (
         <h3 className="text-xl mb-1">{job.title}</h3>
         <p className="text-[#5A5A40] font-medium">{job.employerName}</p>
       </div>
+      {onSave && (
+        <button 
+          onClick={() => onSave(job.id)}
+          className={cn("p-2 rounded-full transition-colors", isSaved ? "bg-[#5A5A40] text-white" : "bg-[#F5F5F0] text-[#5A5A40] hover:bg-[#E5E5E0]")}
+          aria-label={isSaved ? "Remove from saved" : "Save job"}
+        >
+          <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
+        </button>
+      )}
     </div>
     
     <div className="flex flex-wrap gap-4 mb-6 text-sm text-[#666]">
@@ -162,7 +295,7 @@ const JobCard = ({ job, isRecommended }: JobCardProps) => (
       </div>
     </div>
 
-    <div className="mb-6">
+    <div className="mb-6 flex-1">
       <p className="text-xs font-bold uppercase tracking-wider text-[#999] mb-2">Accommodations Provided</p>
       <div className="flex flex-wrap gap-2">
         {job.providedAccommodations.slice(0, 3).map((acc) => (
@@ -176,9 +309,19 @@ const JobCard = ({ job, isRecommended }: JobCardProps) => (
       </div>
     </div>
 
-    <Link to={`/jobs/${job.id}`} className="btn-secondary w-full flex items-center justify-center gap-2">
-      View Details <ChevronRight size={18} />
-    </Link>
+    <div className="flex gap-3 mt-auto">
+      <Link to={`/jobs/${job.id}`} className="btn-secondary flex-1 flex items-center justify-center gap-2 py-2">
+        Details
+      </Link>
+      {onApply && (
+        <button 
+          onClick={() => onApply(job)}
+          className="btn-primary flex-1 flex items-center justify-center gap-2 py-2"
+        >
+          Apply Now
+        </button>
+      )}
+    </div>
   </motion.div>
 );
 
@@ -240,39 +383,97 @@ const LandingPage = () => (
         </div>
       </div>
     </section>
+
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex justify-between items-end mb-12">
+        <div>
+          <h2 className="text-4xl mb-2">Accessibility Resources</h2>
+          <p className="text-[#666]">Expert advice for your professional growth.</p>
+        </div>
+        <Link to="/resources" className="text-[#5A5A40] font-medium flex items-center gap-2 hover:underline">
+          View All <ChevronRight size={18} />
+        </Link>
+      </div>
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {MOCK_RESOURCES.slice(0, 4).map(resource => (
+          <div key={resource.id} className="card flex flex-col h-full">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#5A5A40] mb-2">{resource.category}</span>
+            <h3 className="text-xl mb-3">{resource.title}</h3>
+            <p className="text-sm text-[#666] mb-6 flex-1">{resource.description}</p>
+            <Link to="/resources" className="text-[#5A5A40] font-medium flex items-center gap-2 hover:underline mt-auto">
+              Read More <ChevronRight size={14} />
+            </Link>
+          </div>
+        ))}
+      </div>
+    </section>
   </div>
 );
 
-const JobsPage = ({ user }: { user: UserProfile | null }) => {
+const JobsPage = ({ 
+  user, 
+  savedJobIds, 
+  onSaveJob, 
+  onApplyJob 
+}: { 
+  user: UserProfile | null, 
+  savedJobIds: string[],
+  onSaveJob: (id: string) => void,
+  onApplyJob: (job: Job) => void
+}) => {
   const [search, setSearch] = useState('');
   const [filterDisability, setFilterDisability] = useState<DisabilityType | 'All'>('All');
   const [recommendations, setRecommendations] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && user.role === 'seeker') {
-      setLoading(true);
-      getJobRecommendations(user, MOCK_JOBS).then(recs => {
-        setRecommendations(recs);
+    const fetchJobs = async () => {
+      try {
+        const response = await fetch('/api/jobs');
+        const data = await response.json();
+        setJobs(data);
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+        setJobs(MOCK_JOBS); // Fallback
+      } finally {
         setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  useEffect(() => {
+    if (user && user.role === 'seeker' && jobs.length > 0) {
+      getJobRecommendations(user, jobs).then(recs => {
+        setRecommendations(recs);
       });
     }
-  }, [user]);
+  }, [user, jobs]);
 
-  const filteredJobs = MOCK_JOBS.filter(job => {
+  const filteredJobs = jobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(search.toLowerCase()) ||
                          job.employerName.toLowerCase().includes(search.toLowerCase());
     
-    // Simple logic: if a disability filter is selected, we could show jobs that provide 
-    // accommodations typically associated with that disability. 
-    // For this demo, we'll just show all jobs but highlight the filter.
     return matchesSearch;
   });
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+        <div className="animate-spin w-10 h-10 border-4 border-[#5A5A40] border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-[#666]">Loading opportunities...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-        <h1 className="text-4xl">Available Opportunities</h1>
+        <div>
+          <h1 className="text-4xl mb-2">Available Opportunities</h1>
+          <p className="text-[#666]">Find a workplace that values your unique perspective.</p>
+        </div>
         <div className="flex w-full md:w-auto gap-4">
           <div className="relative flex-1 md:w-80">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#999]" size={20} />
@@ -315,7 +516,14 @@ const JobsPage = ({ user }: { user: UserProfile | null }) => {
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {recommendations.map(job => (
-              <JobCard key={job.id} job={job} isRecommended />
+              <JobCard 
+                key={job.id} 
+                job={job} 
+                isRecommended 
+                isSaved={savedJobIds.includes(job.id)}
+                onSave={onSaveJob}
+                onApply={onApplyJob}
+              />
             ))}
           </div>
         </div>
@@ -325,7 +533,13 @@ const JobsPage = ({ user }: { user: UserProfile | null }) => {
         <h2 className="text-3xl mb-8">All Job Postings</h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredJobs.map(job => (
-            <JobCard key={job.id} job={job} />
+            <JobCard 
+              key={job.id} 
+              job={job} 
+              isSaved={savedJobIds.includes(job.id)}
+              onSave={onSaveJob}
+              onApply={onApplyJob}
+            />
           ))}
         </div>
       </div>
@@ -333,8 +547,267 @@ const JobsPage = ({ user }: { user: UserProfile | null }) => {
   );
 };
 
-const ProfilePage = ({ user, setUser }: { user: UserProfile | null, setUser: (u: UserProfile) => void }) => {
+const ResourcesPage = () => {
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/resources')
+      .then(res => res.json())
+      .then(data => {
+        setResources(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setResources(MOCK_RESOURCES as Resource[]);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div className="py-20 text-center">Loading resources...</div>;
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="text-center mb-16">
+        <h1 className="text-5xl mb-4">Accessibility Resource Center</h1>
+        <p className="text-xl text-[#666] max-w-2xl mx-auto">
+          Guides, tools, and success stories to help you navigate your career journey.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {resources.map(resource => (
+          <div key={resource.id} className="card flex flex-col h-full">
+            <div className="w-12 h-12 bg-[#F5F5F0] dark:bg-[#333] rounded-xl flex items-center justify-center text-[#5A5A40] mb-6">
+              <BookOpen size={24} />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#5A5A40] mb-2">{resource.category}</span>
+            <h3 className="text-xl mb-3">{resource.title}</h3>
+            <p className="text-sm text-[#666] mb-6 flex-1">{resource.description}</p>
+            <a href={resource.link} className="text-[#5A5A40] font-medium flex items-center gap-2 hover:underline">
+              Read More <ExternalLink size={14} />
+            </a>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const ApplicationsPage = ({ applications }: { applications: Application[] }) => (
+  <div className="max-w-4xl mx-auto px-4 py-12">
+    <h1 className="text-4xl mb-8">Your Applications</h1>
+    {applications.length === 0 ? (
+      <div className="card text-center py-20 space-y-4">
+        <FileText size={48} className="mx-auto text-[#999]" />
+        <p className="text-[#666]">You haven't applied to any jobs yet.</p>
+        <Link to="/jobs" className="btn-primary inline-block">Browse Jobs</Link>
+      </div>
+    ) : (
+      <div className="space-y-4">
+        {applications.map(app => (
+          <div key={app.id} className="card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="text-xl mb-1">{app.jobTitle}</h3>
+              <p className="text-[#5A5A40] font-medium">{app.employerName}</p>
+              <p className="text-xs text-[#999] mt-1">Applied on {new Date(app.appliedAt).toLocaleDateString()}</p>
+            </div>
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <span className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider",
+                app.status === 'pending' ? "bg-amber-50 text-amber-700" :
+                app.status === 'interviewing' ? "bg-blue-50 text-blue-700" :
+                app.status === 'offered' ? "bg-emerald-50 text-emerald-700" :
+                "bg-gray-50 text-gray-700"
+              )}>
+                {app.status}
+              </span>
+              <Link to="/messages" className="btn-secondary p-2 rounded-full">
+                <MessageSquare size={18} />
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+const SavedJobsPage = ({ 
+  savedJobIds, 
+  onSaveJob, 
+  onApplyJob 
+}: { 
+  savedJobIds: string[], 
+  onSaveJob: (id: string) => void,
+  onApplyJob: (job: Job) => void
+}) => {
+  const savedJobs = MOCK_JOBS.filter(job => savedJobIds.includes(job.id));
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <h1 className="text-4xl mb-8">Saved Opportunities</h1>
+      {savedJobs.length === 0 ? (
+        <div className="card text-center py-20 space-y-4">
+          <Bookmark size={48} className="mx-auto text-[#999]" />
+          <p className="text-[#666]">You haven't saved any jobs yet.</p>
+          <Link to="/jobs" className="btn-primary inline-block">Browse Jobs</Link>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {savedJobs.map(job => (
+            <JobCard 
+              key={job.id} 
+              job={job} 
+              isSaved={true} 
+              onSave={onSaveJob}
+              onApply={onApplyJob}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const EmployerDashboard = ({ user }: { user: UserProfile | null }) => {
+  const employerJobs = MOCK_JOBS.filter(j => j.employerId === 'emp1'); // Mocking for current user
+  
+  const applicants = [
+    { id: 'a1', name: 'Alex Rivera', job: 'Frontend Developer', status: 'Reviewed', match: '95%' },
+    { id: 'a2', name: 'Jordan Smith', job: 'Frontend Developer', status: 'Pending', match: '88%' },
+    { id: 'a3', name: 'Casey Johnson', job: 'Graphic Designer', status: 'Interviewing', match: '92%' },
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="flex justify-between items-end mb-12">
+        <div>
+          <h1 className="text-4xl mb-2">Employer Dashboard</h1>
+          <p className="text-[#666]">Manage your job postings and track applicants.</p>
+        </div>
+        <Link to="/post-job" className="btn-primary flex items-center gap-2">
+          <Briefcase size={20} /> Post New Job
+        </Link>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <section>
+            <div className="flex items-center gap-3 mb-6">
+              <LayoutDashboard className="text-[#5A5A40]" size={24} />
+              <h2 className="text-2xl">Active Postings</h2>
+            </div>
+            <div className="space-y-4">
+              {employerJobs.map(job => (
+                <div key={job.id} className="card flex justify-between items-center">
+                  <div>
+                    <h3 className="text-xl mb-1">{job.title}</h3>
+                    <p className="text-sm text-[#666]">{job.location} • {job.type}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-lg font-bold">12</p>
+                      <p className="text-xs text-[#999] uppercase">Applicants</p>
+                    </div>
+                    <button className="btn-secondary p-2 rounded-full">
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-3 mb-6">
+              <Users className="text-[#5A5A40]" size={24} />
+              <h2 className="text-2xl">Recent Applicants</h2>
+            </div>
+            <div className="overflow-hidden card p-0">
+              <table className="w-full text-left">
+                <thead className="bg-[#F5F5F0] dark:bg-[#333] text-xs font-bold uppercase tracking-wider text-[#999]">
+                  <tr>
+                    <th className="px-6 py-4">Applicant</th>
+                    <th className="px-6 py-4">Job Role</th>
+                    <th className="px-6 py-4">Match Score</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-subtle">
+                  {applicants.map(applicant => (
+                    <tr key={applicant.id} className="hover:bg-[#FDFCFB] dark:hover:bg-[#222] transition-colors">
+                      <td className="px-6 py-4 font-medium">{applicant.name}</td>
+                      <td className="px-6 py-4 text-sm text-[#666]">{applicant.job}</td>
+                      <td className="px-6 py-4">
+                        <span className="px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg">
+                          {applicant.match}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-[#F5F5F0] dark:bg-[#333]">
+                          {applicant.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button className="text-[#5A5A40] hover:underline text-sm font-medium">View Profile</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <div className="space-y-8">
+          <div className="card bg-[#5A5A40] text-white">
+            <h3 className="text-xl mb-4">Hiring Insights</h3>
+            <div className="space-y-6">
+              <div>
+                <p className="text-3xl font-bold">84%</p>
+                <p className="text-xs opacity-80 uppercase tracking-widest">Accessibility Score</p>
+                <div className="w-full bg-white/20 h-1 rounded-full mt-2">
+                  <div className="bg-white h-full rounded-full" style={{ width: '84%' }}></div>
+                </div>
+              </div>
+              <p className="text-sm opacity-90">Your job descriptions are highly inclusive. Adding more visual accommodations could improve your score.</p>
+            </div>
+          </div>
+
+          <div className="card">
+            <h3 className="text-xl mb-4">Quick Actions</h3>
+            <div className="space-y-2">
+              <button className="w-full text-left p-3 rounded-xl hover:bg-[#F5F5F0] dark:hover:bg-[#333] transition-colors flex items-center gap-3">
+                <MessageSquare size={18} className="text-[#5A5A40]" />
+                <span className="text-sm">Message all applicants</span>
+              </button>
+              <button className="w-full text-left p-3 rounded-xl hover:bg-[#F5F5F0] dark:hover:bg-[#333] transition-colors flex items-center gap-3">
+                <Bell size={18} className="text-[#5A5A40]" />
+                <span className="text-sm">Set up hiring alerts</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProfilePage = ({ 
+  user, 
+  setUser, 
+  applicationsCount, 
+  savedCount 
+}: { 
+  user: UserProfile | null, 
+  setUser: (u: UserProfile) => void,
+  applicationsCount: number,
+  savedCount: number
+}) => {
   const [isEditing, setIsEditing] = useState(!user);
+  const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [formData, setFormData] = useState<Partial<UserProfile>>(user || {
     name: '',
     email: '',
@@ -472,6 +945,24 @@ const ProfilePage = ({ user, setUser }: { user: UserProfile | null, setUser: (u:
           <button onClick={() => setIsEditing(true)} className="btn-secondary py-2">Edit Profile</button>
         </div>
 
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          <Link to="/applications" className="card text-center hover:bg-[#F5F5F0] transition-colors">
+            <FileText size={32} className="mx-auto text-[#5A5A40] mb-2" />
+            <p className="text-2xl font-bold">{applicationsCount}</p>
+            <p className="text-sm text-[#666]">Applications</p>
+          </Link>
+          <Link to="/saved-jobs" className="card text-center hover:bg-[#F5F5F0] transition-colors">
+            <Bookmark size={32} className="mx-auto text-[#5A5A40] mb-2" />
+            <p className="text-2xl font-bold">{savedCount}</p>
+            <p className="text-sm text-[#666]">Saved Jobs</p>
+          </Link>
+          <div className="card text-center">
+            <Accessibility size={32} className="mx-auto text-[#5A5A40] mb-2" />
+            <p className="text-2xl font-bold">100%</p>
+            <p className="text-sm text-[#666]">Profile Score</p>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-12">
           <div className="space-y-8">
             <section>
@@ -481,7 +972,7 @@ const ProfilePage = ({ user, setUser }: { user: UserProfile | null, setUser: (u:
                   <p className="text-sm font-bold text-[#999] uppercase mb-2">Disabilities</p>
                   <div className="flex flex-wrap gap-2">
                     {user?.disabilities.map(d => (
-                      <span key={d} className="px-3 py-1 bg-[#F5F5F0] text-[#5A5A40] rounded-full text-sm">{d}</span>
+                      <span key={d} className="px-3 py-1 bg-[#F5F5F0] dark:bg-[#333] text-text-primary rounded-full text-sm">{d}</span>
                     ))}
                   </div>
                 </div>
@@ -489,12 +980,42 @@ const ProfilePage = ({ user, setUser }: { user: UserProfile | null, setUser: (u:
                   <p className="text-sm font-bold text-[#999] uppercase mb-2">Required Accommodations</p>
                   <div className="flex flex-wrap gap-2">
                     {user?.neededAccommodations.map(a => (
-                      <span key={a} className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-sm flex items-center gap-1.5">
+                      <span key={a} className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30 rounded-full text-sm flex items-center gap-1.5">
                         <CheckCircle2 size={14} /> {a}
                       </span>
                     ))}
                   </div>
                 </div>
+              </div>
+            </section>
+
+            <section className="pt-8 border-t border-border-subtle">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Bell size={20} className="text-[#5A5A40]" />
+                  <h3 className="text-2xl">Job Alerts</h3>
+                </div>
+                <button 
+                  onClick={() => setAlertsEnabled(!alertsEnabled)}
+                  className={cn(
+                    "w-12 h-6 rounded-full transition-all relative",
+                    alertsEnabled ? "bg-[#5A5A40]" : "bg-[#E5E5E0]"
+                  )}
+                >
+                  <div className={cn(
+                    "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
+                    alertsEnabled ? "right-1" : "left-1"
+                  )} />
+                </button>
+              </div>
+              <p className="text-sm text-[#666] mb-4">Receive notifications when new jobs matching your accessibility profile are posted.</p>
+              <div className="space-y-2">
+                {['Remote Roles', 'Frontend Positions', 'Visual Accessibility Focus'].map(alert => (
+                  <div key={alert} className="flex items-center gap-2 text-sm text-text-primary">
+                    <CheckCircle2 size={14} className="text-emerald-500" />
+                    {alert}
+                  </div>
+                ))}
               </div>
             </section>
           </div>
@@ -524,87 +1045,162 @@ const ProfilePage = ({ user, setUser }: { user: UserProfile | null, setUser: (u:
   );
 };
 
-const MessagesPage = ({ user }: { user: UserProfile | null }) => {
-  const [activeChat, setActiveChat] = useState<string | null>(null);
-  const [newMessage, setNewMessage] = useState('');
+const ResumeOptimizerPage = () => {
+  const [resumeText, setResumeText] = useState('');
+  const [result, setResult] = useState<{ optimizedText: string, suggestions: string[] } | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const contacts = [
-    { id: 'emp1', name: 'TechFlow Solutions', lastMsg: 'We would love to schedule an interview!', time: '2h ago' },
-    { id: 'emp2', name: 'Green Horizon', lastMsg: 'Thank you for your application.', time: '1d ago' },
-  ];
-
-  if (!user) return <div className="text-center py-20">Please sign in to view messages.</div>;
+  const handleOptimize = async () => {
+    if (!resumeText.trim()) return;
+    setLoading(true);
+    try {
+      const response = await fetch('/api/optimize-resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeText })
+      });
+      const data = await response.json();
+      setResult(data);
+    } catch (error) {
+      console.error('Optimization failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12 h-[calc(100vh-160px)]">
-      <div className="card h-full p-0 flex overflow-hidden">
-        {/* Sidebar */}
-        <div className="w-80 border-r border-[#E5E5E0] flex flex-col">
-          <div className="p-6 border-b border-[#E5E5E0]">
-            <h2 className="text-2xl">Messages</h2>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {contacts.map(contact => (
-              <button
-                key={contact.id}
-                onClick={() => setActiveChat(contact.id)}
-                className={cn(
-                  "w-full p-6 text-left transition-all hover:bg-[#F5F5F0]",
-                  activeChat === contact.id && "bg-[#F5F5F0]"
-                )}
-              >
-                <div className="flex justify-between items-start mb-1">
-                  <p className="font-medium">{contact.name}</p>
-                  <span className="text-xs text-[#999]">{contact.time}</span>
-                </div>
-                <p className="text-sm text-[#666] truncate">{contact.lastMsg}</p>
-              </button>
-            ))}
-          </div>
+    <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="text-center mb-12">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-[#5A5A40]/10 text-[#5A5A40] rounded-2xl mb-4">
+          <Sparkles size={32} />
+        </div>
+        <h1 className="text-4xl mb-4">AI Resume Optimizer</h1>
+        <p className="text-[#666]">Optimize your resume for accessibility-focused roles and inclusive employers.</p>
+      </div>
+
+      <div className="grid gap-8">
+        <div className="card">
+          <label className="label">Paste your resume content</label>
+          <textarea 
+            className="input-field min-h-[200px] font-mono text-sm"
+            placeholder="Experience, skills, education..."
+            value={resumeText}
+            onChange={(e) => setResumeText(e.target.value)}
+          />
+          <button 
+            onClick={handleOptimize}
+            disabled={loading || !resumeText.trim()}
+            className="btn-primary w-full mt-4 flex items-center justify-center gap-2"
+          >
+            {loading ? 'Optimizing...' : <><Sparkles size={18} /> Optimize for Inclusivity</>}
+          </button>
         </div>
 
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-[#FDFCFB]">
-          {activeChat ? (
-            <>
-              <div className="p-6 border-b border-[#E5E5E0] bg-white">
-                <h3 className="text-xl">{contacts.find(c => c.id === activeChat)?.name}</h3>
+        {result && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="card bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/20">
+              <h3 className="text-xl text-emerald-800 dark:text-emerald-400 mb-4 flex items-center gap-2">
+                <CheckCircle2 size={20} /> AI Suggestions
+              </h3>
+              <ul className="space-y-3">
+                {result.suggestions.map((s, i) => (
+                  <li key={i} className="text-sm text-emerald-700 dark:text-emerald-300 flex items-start gap-2">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="card">
+              <h3 className="text-xl mb-4">Optimized Content</h3>
+              <div className="p-4 bg-[#F5F5F0] dark:bg-[#333] rounded-xl font-mono text-sm whitespace-pre-wrap">
+                {result.optimizedText}
               </div>
-              <div className="flex-1 p-6 overflow-y-auto space-y-4">
-                <div className="flex justify-start">
-                  <div className="bg-white border border-[#E5E5E0] p-4 rounded-2xl max-w-md">
-                    <p className="text-sm">Hello! We reviewed your profile and your accessibility needs align perfectly with our remote work setup. Would you be available for a call next Tuesday?</p>
-                    <span className="text-[10px] text-[#999] mt-2 block">10:30 AM</span>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <div className="bg-[#5A5A40] text-white p-4 rounded-2xl max-w-md">
-                    <p className="text-sm">Hi! That sounds great. Tuesday works for me. I prefer text-based communication for the initial interview if possible.</p>
-                    <span className="text-[10px] text-white/60 mt-2 block">10:35 AM</span>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6 bg-white border-t border-[#E5E5E0]">
-                <div className="flex gap-4">
-                  <input 
-                    type="text" 
-                    placeholder="Type your message..." 
-                    className="input-field"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                  />
-                  <button className="btn-primary px-6 flex items-center gap-2">
-                    <Send size={18} /> <span className="hidden sm:inline">Send</span>
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-[#999] space-y-4">
-              <MessageSquare size={48} />
-              <p>Select a conversation to start messaging</p>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const CommunityChatPage = ({ user }: { user: UserProfile | null }) => {
+  const [messages, setMessages] = useState<{ text: string, sender: string, timestamp: string }[]>([]);
+  const [input, setInput] = useState('');
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}`);
+    
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        setMessages(prev => [...prev, msg]);
+      } catch (e) {
+        console.error('Failed to parse message:', e);
+      }
+    };
+
+    setSocket(ws);
+    return () => ws.close();
+  }, []);
+
+  const handleSend = () => {
+    if (!input.trim() || !socket) return;
+    const msg = {
+      text: input,
+      sender: user?.name || 'Anonymous',
+      timestamp: new Date().toLocaleTimeString()
+    };
+    socket.send(JSON.stringify(msg));
+    setInput('');
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-12 h-[calc(100vh-160px)] flex flex-col">
+      <div className="flex items-center gap-3 mb-8">
+        <MessageSquare className="text-[#5A5A40]" size={32} />
+        <h1 className="text-4xl">Community Chat</h1>
+      </div>
+
+      <div className="flex-1 card overflow-hidden flex flex-col p-0">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#FDFCFB] dark:bg-[#1A1A1A]">
+          {messages.length === 0 && (
+            <div className="text-center py-20 opacity-40">
+              <MessageSquare size={48} className="mx-auto mb-4" />
+              <p>No messages yet. Start the conversation!</p>
             </div>
           )}
+          {messages.map((msg, i) => (
+            <div key={i} className={cn(
+              "max-w-[80%] p-4 rounded-2xl",
+              msg.sender === user?.name ? "ml-auto bg-[#5A5A40] text-white" : "bg-[#F5F5F0] dark:bg-[#333] text-text-primary"
+            )}>
+              <div className="flex justify-between items-end gap-4 mb-1">
+                <span className="text-xs font-bold opacity-70">{msg.sender}</span>
+                <span className="text-[10px] opacity-50">{msg.timestamp}</span>
+              </div>
+              <p className="text-sm">{msg.text}</p>
+            </div>
+          ))}
+        </div>
+        <div className="p-4 border-t border-border-subtle bg-card-bg flex gap-2">
+          <input 
+            className="input-field"
+            placeholder="Type a message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+          />
+          <button onClick={handleSend} className="btn-primary p-3">
+            <Send size={20} />
+          </button>
         </div>
       </div>
     </div>
@@ -705,21 +1301,95 @@ const PostJobPage = ({ user }: { user: UserProfile | null }) => {
 
 export default function App() {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [theme, setTheme] = useState<Theme>('light');
+
+  useEffect(() => {
+    document.documentElement.classList.remove('light', 'dark', 'high-contrast');
+    document.documentElement.classList.add(theme);
+  }, [theme]);
+
+  const handleSaveJob = (id: string) => {
+    setSavedJobIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleApplyJob = (job: Job) => {
+    if (applications.some(app => app.jobId === job.id)) {
+      alert('You have already applied to this job.');
+      return;
+    }
+    const newApp: Application = {
+      id: Math.random().toString(36).substr(2, 9),
+      jobId: job.id,
+      jobTitle: job.title,
+      employerName: job.employerName,
+      status: 'pending',
+      appliedAt: new Date().toISOString()
+    };
+    setApplications(prev => [newApp, ...prev]);
+    alert(`Successfully applied to ${job.title} at ${job.employerName}!`);
+  };
 
   return (
     <Router>
       <div className="min-h-screen flex flex-col">
-        <Navbar user={user} />
+        <Navbar user={user} theme={theme} setTheme={setTheme} />
         <main className="flex-1">
           <AnimatePresence mode="wait">
             <Routes>
               <Route path="/" element={<LandingPage />} />
-              <Route path="/jobs" element={<JobsPage user={user} />} />
-              <Route path="/profile" element={<ProfilePage user={user} setUser={setUser} />} />
-              <Route path="/messages" element={<MessagesPage user={user} />} />
-              <Route path="/login" element={<ProfilePage user={user} setUser={setUser} />} />
-              <Route path="/register" element={<ProfilePage user={user} setUser={setUser} />} />
+              <Route path="/jobs" element={
+                <JobsPage 
+                  user={user} 
+                  savedJobIds={savedJobIds} 
+                  onSaveJob={handleSaveJob}
+                  onApplyJob={handleApplyJob}
+                />
+              } />
+              <Route path="/resources" element={<ResourcesPage />} />
+              <Route path="/applications" element={<ApplicationsPage applications={applications} />} />
+              <Route path="/saved-jobs" element={
+                <SavedJobsPage 
+                  savedJobIds={savedJobIds} 
+                  onSaveJob={handleSaveJob} 
+                  onApplyJob={handleApplyJob}
+                />
+              } />
+              <Route path="/profile" element={
+                user?.role === 'employer' ? (
+                  <EmployerDashboard user={user} />
+                ) : (
+                  <ProfilePage 
+                    user={user} 
+                    setUser={setUser} 
+                    applicationsCount={applications.length}
+                    savedCount={savedJobIds.length}
+                  />
+                )
+              } />
+              <Route path="/chat" element={<CommunityChatPage user={user} />} />
+              <Route path="/resume-ai" element={<ResumeOptimizerPage />} />
+              <Route path="/login" element={
+                <ProfilePage 
+                  user={user} 
+                  setUser={setUser} 
+                  applicationsCount={applications.length}
+                  savedCount={savedJobIds.length}
+                />
+              } />
+              <Route path="/register" element={
+                <ProfilePage 
+                  user={user} 
+                  setUser={setUser} 
+                  applicationsCount={applications.length}
+                  savedCount={savedJobIds.length}
+                />
+              } />
               <Route path="/post-job" element={<PostJobPage user={user} />} />
+              <Route path="/dashboard" element={<EmployerDashboard user={user} />} />
             </Routes>
           </AnimatePresence>
         </main>

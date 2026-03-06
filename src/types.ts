@@ -57,3 +57,21 @@ export interface Message {
   timestamp: string;
   read: boolean;
 }
+
+export interface Application {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  employerName: string;
+  status: 'pending' | 'reviewed' | 'interviewing' | 'offered' | 'rejected';
+  appliedAt: string;
+}
+
+export interface Resource {
+  id: string;
+  title: string;
+  category: 'Legal' | 'Tools' | 'Tips' | 'Success Stories';
+  description: string;
+  link: string;
+  icon?: string;
+}

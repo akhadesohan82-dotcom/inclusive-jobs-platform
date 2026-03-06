@@ -54,3 +54,34 @@ export const MOCK_JOBS: Job[] = [
     postedAt: new Date().toISOString()
   }
 ];
+
+export const MOCK_RESOURCES = [
+  {
+    id: 'r1',
+    title: 'Workplace Rights for People with Disabilities',
+    category: 'Legal',
+    description: 'A comprehensive guide to your rights under the ADA and other local regulations.',
+    link: '#'
+  },
+  {
+    id: 'r2',
+    title: 'Top 5 Screen Readers for 2026',
+    category: 'Tools',
+    description: 'An updated comparison of the most effective screen reading software for professional use.',
+    link: '#'
+  },
+  {
+    id: 'r3',
+    title: 'Interview Tips: Discussing Accommodations',
+    category: 'Tips',
+    description: 'How and when to bring up your accessibility needs during the hiring process.',
+    link: '#'
+  },
+  {
+    id: 'r4',
+    title: 'Success Story: Accessibility in Tech',
+    category: 'Success Stories',
+    description: 'How Sarah, a deaf software engineer, found her dream role at a major tech firm.',
+    link: '#'
+  }
+];

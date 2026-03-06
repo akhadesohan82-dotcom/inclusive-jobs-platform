@@ -3,11 +3,37 @@
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-serif: 'Cormorant Garamond', serif;
+  
+  --color-bg-primary: var(--bg-primary);
+  --color-text-primary: var(--text-primary);
+  --color-card-bg: var(--card-bg);
+  --color-border-subtle: var(--border-subtle);
+}
+
+:root {
+  --bg-primary: #FDFCFB;
+  --text-primary: #1A1A1A;
+  --card-bg: #FFFFFF;
+  --border-subtle: #E5E5E0;
+}
+
+.dark {
+  --bg-primary: #121212;
+  --text-primary: #F5F5F0;
+  --card-bg: #1E1E1E;
+  --border-subtle: #333333;
+}
+
+.high-contrast {
+  --bg-primary: #000000;
+  --text-primary: #FFFFFF;
+  --card-bg: #000000;
+  --border-subtle: #FFFFFF;
 }
 
 @layer base {
   body {
-    @apply bg-[#FDFCFB] text-[#1A1A1A] font-sans antialiased;
+    @apply bg-bg-primary text-text-primary font-sans antialiased transition-colors duration-300;
   }
 
   h1, h2, h3, h4 {
@@ -17,23 +43,23 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-[#5A5A40] text-white px-6 py-3 rounded-full font-medium transition-all hover:bg-[#4A4A35] focus:ring-4 focus:ring-[#5A5A40]/20 outline-none;
+    @apply bg-[#5A5A40] text-white px-6 py-3 rounded-full font-medium transition-all hover:bg-[#4A4A35] focus:ring-4 focus:ring-[#5A5A40]/20 outline-none disabled:opacity-50;
   }
   
   .btn-secondary {
-    @apply bg-white border border-[#5A5A40]/20 text-[#5A5A40] px-6 py-3 rounded-full font-medium transition-all hover:bg-[#F5F5F0] focus:ring-4 focus:ring-[#5A5A40]/10 outline-none;
+    @apply bg-card-bg border border-border-subtle text-text-primary px-6 py-3 rounded-full font-medium transition-all hover:opacity-80 focus:ring-4 focus:ring-border-subtle outline-none;
   }
 
   .card {
-    @apply bg-white rounded-3xl p-6 shadow-sm border border-[#E5E5E0] transition-all hover:shadow-md;
+    @apply bg-card-bg rounded-3xl p-6 shadow-sm border border-border-subtle transition-all hover:shadow-md;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 rounded-2xl border border-[#E5E5E0] bg-white focus:border-[#5A5A40] focus:ring-2 focus:ring-[#5A5A40]/10 outline-none transition-all;
+    @apply w-full px-4 py-3 rounded-2xl border border-border-subtle bg-card-bg text-text-primary focus:border-[#5A5A40] focus:ring-2 focus:ring-[#5A5A40]/10 outline-none transition-all;
   }
 
   .label {
-    @apply block text-sm font-medium text-[#5A5A40] mb-2;
+    @apply block text-sm font-medium opacity-80 mb-2;
   }
 }
 
